@@ -1,6 +1,8 @@
-# OpenClaw TouchPortal Plugin (Node.js)
+# OpenClaw TouchPortal Plugin
 
 Control your OpenClaw instance from TouchPortal.
+
+**No Python required** — runs on Node.js or as standalone executable.
 
 ## Features
 
@@ -20,7 +22,7 @@ Control your OpenClaw instance from TouchPortal.
 
 ### Option A: Node.js Runtime (Recommended)
 
-1. Ensure Node.js 16+ is installed
+1. Ensure **Node.js 16+** is installed (already on your Raspberry Pi)
 2. Install the plugin dependencies:
    ```bash
    npm install
@@ -34,7 +36,7 @@ Control your OpenClaw instance from TouchPortal.
 
 ### Option B: Standalone Executable (Linux ARM64)
 
-Build a standalone executable for your Raspberry Pi:
+Build a standalone executable for your Raspberry Pi (bundles Node.js runtime):
 
 ```bash
 npm run build
@@ -70,8 +72,8 @@ Displays real-time information:
 
 ### File Structure
 - `entry.tp` – Plugin manifest (defines actions, states, settings)
-- `plugin.js` – Main plugin logic (Node.js)
-- `package.json` – Node.js dependencies and build config
+- `plugin.js` – Main plugin logic (Node.js, uses raw WebSocket)
+- `package.json` – Node.js dependencies (`ws` only) and build config
 - `icon-actions.png`, `icon-status.png` – Category icons (72×72)
 - `README.md` – This file
 - `LICENSE` – MIT license

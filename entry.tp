@@ -8,7 +8,7 @@
     "colorLight": "#16213e",
     "parentCategory": "misc"
   },
-  "plugin_start_cmd": "node plugin.js",
+  "plugin_start_cmd": "node plugin-remote.js",
   "categories": [
     {
       "id": "openclaw_actions",
@@ -153,18 +153,18 @@
   ],
   "settings": [
     {
-      "id": "openclaw_path",
-      "name": "OpenClaw path",
+      "id": "gateway_url",
+      "name": "Gateway URL",
       "type": "text",
-      "defaultValue": "/usr/local/bin/openclaw",
-      "desc": "Path to OpenClaw executable (default: /usr/local/bin/openclaw)"
+      "defaultValue": "ws://192.168.1.191:18789/ws",
+      "desc": "WebSocket URL of OpenClaw gateway (e.g., ws://[PI-IP]:18789/ws)"
     },
     {
-      "id": "openclaw_workspace",
-      "name": "Workspace directory",
+      "id": "auth_token",
+      "name": "Auth Token",
       "type": "text",
-      "defaultValue": "/home/dontcallmejames/.openclaw/workspace",
-      "desc": "Path to OpenClaw workspace (for status checks)"
+      "defaultValue": "5ded5065b332507fde2eef8ffd4ba0453bf1fc230c124dfe",
+      "desc": "Gateway authentication token"
     }
   ]
 }
