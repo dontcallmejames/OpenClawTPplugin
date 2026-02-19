@@ -8,7 +8,7 @@
     "colorLight": "#16213e",
     "parentCategory": "misc"
   },
-  "plugin_start_cmd": "python plugin.py",
+  "plugin_start_cmd": "node plugin.js",
   "categories": [
     {
       "id": "openclaw_actions",

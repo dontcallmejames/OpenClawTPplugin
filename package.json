@@ -1,0 +1,33 @@
+{
+  "name": "openclaw-touchportal-plugin",
+  "version": "1.0.0",
+  "description": "TouchPortal plugin for OpenClaw control",
+  "main": "plugin.js",
+  "scripts": {
+    "start": "node plugin.js",
+    "build": "pkg . --targets node18-linux-arm64 --output openclaw-tp-plugin"
+  },
+  "dependencies": {
+    "ws": "^8.19.0"
+  },
+  "devDependencies": {
+    "pkg": "^5.8.1"
+  },
+  "pkg": {
+    "assets": [
+      "icon-actions.png",
+      "icon-status.png"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://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@github.com/dontcallmejames/OpenClawTPplugin.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/dontcallmejames/OpenClawTPplugin/issues"
+  },
+  "homepage": "https://github.com/dontcallmejames/OpenClawTPplugin#readme"
+}
