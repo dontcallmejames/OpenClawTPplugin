@@ -35,30 +35,88 @@
       "data": []
     },
     {
-      "id": "openclaw_switch_model",
-      "name": "Switch Model",
+      "id": "openclaw_switch_model_deepseek",
+      "name": "Model: DeepSeek V3.2",
       "prefix": "OpenClaw",
       "type": "communicate",
       "executionType": "once",
       "execution_cmd": "",
       "tryInline": false,
-      "description": "Switch the current model",
+      "description": "Switch to DeepSeek V3.2 (OpenRouter)",
       "category": "openclaw_actions",
-      "data": [
-        {
-          "id": "model",
-          "type": "choice",
-          "label": "Model",
-          "defaultValue": "deepseek-v3.2",
-          "valueChoices": [
-            "deepseek-v3.2",
-            "ollama/llama3.2:3b",
-            "claude-3.5-sonnet",
-            "gpt-4o",
-            "gemini-2.5-flash-lite"
-          ]
-        }
-      ]
+      "data": []
+    },
+    {
+      "id": "openclaw_switch_model_ollama",
+      "name": "Model: Llama3.2 3B",
+      "prefix": "OpenClaw",
+      "type": "communicate",
+      "executionType": "once",
+      "execution_cmd": "",
+      "tryInline": false,
+      "description": "Switch to local Llama3.2 3B (Ollama)",
+      "category": "openclaw_actions",
+      "data": []
+    },
+    {
+      "id": "openclaw_switch_model_claude",
+      "name": "Model: Claude 3.5 Sonnet",
+      "prefix": "OpenClaw",
+      "type": "communicate",
+      "executionType": "once",
+      "execution_cmd": "",
+      "tryInline": false,
+      "description": "Switch to Claude 3.5 Sonnet",
+      "category": "openclaw_actions",
+      "data": []
+    },
+    {
+      "id": "openclaw_switch_model_gpt4o",
+      "name": "Model: GPT‑4o",
+      "prefix": "OpenClaw",
+      "type": "communicate",
+      "executionType": "once",
+      "execution_cmd": "",
+      "tryInline": false,
+      "description": "Switch to GPT‑4o",
+      "category": "openclaw_actions",
+      "data": []
+    },
+    {
+      "id": "openclaw_switch_model_gemini",
+      "name": "Model: Gemini 2.5 Flash",
+      "prefix": "OpenClaw",
+      "type": "communicate",
+      "executionType": "once",
+      "execution_cmd": "",
+      "tryInline": false,
+      "description": "Switch to Gemini 2.5 Flash Lite",
+      "category": "openclaw_actions",
+      "data": []
+    },
+    {
+      "id": "openclaw_kill_subagents",
+      "name": "Kill Sub‑Agents",
+      "prefix": "OpenClaw",
+      "type": "communicate",
+      "executionType": "once",
+      "execution_cmd": "",
+      "tryInline": false,
+      "description": "Terminate all running sub‑agents",
+      "category": "openclaw_actions",
+      "data": []
+    },
+    {
+      "id": "openclaw_toggle_thinking",
+      "name": "Toggle Thinking Mode",
+      "prefix": "OpenClaw",
+      "type": "communicate",
+      "executionType": "once",
+      "execution_cmd": "",
+      "tryInline": false,
+      "description": "Enable/disable reasoning mode (/reasoning)",
+      "category": "openclaw_actions",
+      "data": []
     },
     {
       "id": "openclaw_trigger_heartbeat",
