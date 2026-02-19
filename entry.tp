@@ -1,0 +1,112 @@
+{
+  "api": 10,
+  "version": 1,
+  "name": "OpenClaw",
+  "id": "openclaw.deckard",
+  "configuration": {
+    "colorDark": "#1a1a2e",
+    "colorLight": "#16213e",
+    "parentCategory": "misc"
+  },
+  "plugin_start_cmd": "python plugin.py",
+  "categories": [
+    {
+      "id": "openclaw_actions",
+      "name": "Actions",
+      "imagepath": "icon-actions.png"
+    },
+    {
+      "id": "openclaw_status",
+      "name": "Status",
+      "imagepath": "icon-status.png"
+    }
+  ],
+  "actions": [
+    {
+      "id": "openclaw_reset_gateway",
+      "name": "Reset Gateway",
+      "prefix": "OpenClaw",
+      "type": "communicate",
+      "executionType": "once",
+      "execution_cmd": "openclaw gateway restart",
+      "tryInline": false,
+      "description": "Restart the OpenClaw gateway",
+      "category": "openclaw_actions",
+      "data": []
+    },
+    {
+      "id": "openclaw_switch_model",
+      "name": "Switch Model",
+      "prefix": "OpenClaw",
+      "type": "communicate",
+      "executionType": "once",
+      "execution_cmd": "",
+      "tryInline": false,
+      "description": "Switch the current model",
+      "category": "openclaw_actions",
+      "data": [
+        {
+          "id": "model",
+          "type": "choice",
+          "label": "Model",
+          "defaultValue": "deepseek-v3.2",
+          "valueChoices": [
+            "deepseek-v3.2",
+            "ollama/llama3.2:3b",
+            "claude-3.5-sonnet",
+            "gpt-4o",
+            "gemini-2.5-flash-lite"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "openclaw_trigger_heartbeat",
+      "name": "Trigger Heartbeat",
+      "prefix": "OpenClaw",
+      "type": "communicate",
+      "executionType": "once",
+      "execution_cmd": "",
+      "tryInline": false,
+      "description": "Trigger a manual heartbeat check",
+      "category": "openclaw_actions",
+      "data": []
+    }
+  ],
+  "states": [
+    {
+      "id": "openclaw_current_model",
+      "desc": "Current model",
+      "defaultValue": "unknown",
+      "category": "openclaw_status"
+    },
+    {
+      "id": "openclaw_agent_status",
+      "desc": "Agent status",
+      "defaultValue": "offline",
+      "category": "openclaw_status"
+    },
+    {
+      "id": "openclaw_uptime",
+      "desc": "Uptime",
+      "defaultValue": "0s",
+      "category": "openclaw_status"
+    }
+  ],
+  "settings": [
+    {
+      "id": "openclaw_path",
+      "name": "OpenClaw path",
+      "type": "text",
+      "defaultValue": "/usr/local/bin/openclaw",
+      "desc": "Path to OpenClaw executable (default: /usr/local/bin/openclaw)"
+    },
+    {
+      "id": "openclaw_workspace",
+      "name": "Workspace directory",
+      "type": "text",
+      "defaultValue": "/home/dontcallmejames/.openclaw/workspace",
+      "desc": "Path to OpenClaw workspace (for status checks)"
+    }
+  ]
+}
