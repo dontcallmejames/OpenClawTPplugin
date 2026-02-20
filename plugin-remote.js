@@ -4,14 +4,14 @@
  * Uses OpenClaw's HTTP /tools/invoke API — no complex WebSocket protocol needed.
  */
 
-const WebSocket = require('ws');
+const net = require('net');
 const https = require('https');
 const http = require('http');
 
 class OpenClawRemotePlugin {
     constructor() {
         this.pluginId = 'openclaw.deckard';
-        this.tpWs = null;
+        this.tpSocket = null;
         this.running = true;
         this.statusInterval = null;
 
@@ -73,10 +73,10 @@ class OpenClawRemotePlugin {
         return this.invokeTool('exec', { command });
     }
 
-    // Send message to TouchPortal
+    // Send message to TouchPortal (raw TCP JSON line)
     sendToTP(msg) {
-        if (this.tpWs && this.tpWs.readyState === WebSocket.OPEN) {
-            this.tpWs.send(JSON.stringify(msg));
+        if (this.tpSocket && !this.tpSocket.destroyed) {
+            this.tpSocket.write(JSON.stringify(msg) + '\n');
         }
     }
 
@@ -180,12 +180,14 @@ class OpenClawRemotePlugin {
         return values;
     }
 
-    // TouchPortal connection
+    // TouchPortal connection (raw TCP, JSONL protocol)
     connectToTouchPortal(port = 12136) {
         console.log(`[OpenClaw] Connecting to TouchPortal on port ${port}`);
-        this.tpWs = new WebSocket(`ws://127.0.0.1:${port}`);
+        this.tpSocket = net.createConnection(port, '127.0.0.1');
 
-        this.tpWs.on('open', () => {
+        let buf = '';
+
+        this.tpSocket.on('connect', () => {
             console.log('[OpenClaw] TouchPortal connected');
             // Pair with TouchPortal
             this.sendToTP({ type: 'pair', id: this.pluginId });
@@ -197,39 +199,44 @@ class OpenClawRemotePlugin {
             this.statusInterval = setInterval(() => this.fetchStatus(), 30000);
         });
 
-        this.tpWs.on('message', (data) => {
-            try {
-                const msg = JSON.parse(data.toString());
-
-                if (msg.type === 'action') {
-                    this.handleAction(msg.actionId);
-                }
-                else if (msg.type === 'settings') {
-                    const settings = this.parseSettings(msg.values);
-                    if (settings.gateway_url) {
-                        this.gatewayUrl = settings.gateway_url.replace(/\/ws$/, '').replace(/\/$/, '');
-                        console.log(`[OpenClaw] Gateway URL: ${this.gatewayUrl}`);
+        this.tpSocket.on('data', (chunk) => {
+            buf += chunk.toString();
+            const lines = buf.split('\n');
+            buf = lines.pop(); // keep incomplete last line in buffer
+            for (const line of lines) {
+                const trimmed = line.trim();
+                if (!trimmed) continue;
+                try {
+                    const msg = JSON.parse(trimmed);
+                    if (msg.type === 'action') {
+                        this.handleAction(msg.actionId);
                     }
-                    if (settings.auth_token) {
-                        this.authToken = settings.auth_token;
-                        console.log('[OpenClaw] Auth token updated');
+                    else if (msg.type === 'settings') {
+                        const settings = this.parseSettings(msg.values);
+                        if (settings.gateway_url) {
+                            this.gatewayUrl = settings.gateway_url.replace(/\/ws$/, '').replace(/\/$/, '');
+                            console.log(`[OpenClaw] Gateway URL: ${this.gatewayUrl}`);
+                        }
+                        if (settings.auth_token) {
+                            this.authToken = settings.auth_token;
+                            console.log('[OpenClaw] Auth token updated');
+                        }
+                        setTimeout(() => this.fetchStatus(), 500);
                     }
-                    // Trigger a status check after settings update
-                    setTimeout(() => this.fetchStatus(), 500);
+                    else if (msg.type === 'closePlugin') {
+                        this.running = false;
+                    }
+                } catch (err) {
+                    console.error('[OpenClaw] TP parse error:', err.message, '| line:', trimmed.slice(0, 80));
                 }
-                else if (msg.type === 'closePlugin') {
-                    this.running = false;
-                }
-            } catch (err) {
-                console.error('[OpenClaw] TP message error:', err);
             }
         });
 
-        this.tpWs.on('error', (err) => {
+        this.tpSocket.on('error', (err) => {
             console.error('[OpenClaw] TP error:', err.message);
         });
 
-        this.tpWs.on('close', () => {
+        this.tpSocket.on('close', () => {
             console.log('[OpenClaw] TouchPortal disconnected');
             this.running = false;
             if (this.statusInterval) clearInterval(this.statusInterval);
