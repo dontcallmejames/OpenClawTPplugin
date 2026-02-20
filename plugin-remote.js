@@ -17,7 +17,7 @@ class OpenClawRemotePlugin {
 
         // Settings (configured in TouchPortal plugin settings)
         this.gatewayUrl = 'http://192.168.1.191:18789';   // Pi gateway HTTP base URL
-        this.authToken = '';
+        this.authToken = '5ded5065b332507fde2eef8ffd4ba0453bf1fc230c124dfe'; // default token
 
         // Model mapping (action id -> model string)
         this.modelMap = {
@@ -222,11 +222,11 @@ class OpenClawRemotePlugin {
                             this.gatewayUrl = settings.gateway_url.replace(/\/ws$/, '').replace(/\/$/, '');
                             console.log(`[OpenClaw] Gateway URL: ${this.gatewayUrl}`);
                         }
-                        if (settings.auth_token) {
-                            this.authToken = settings.auth_token;
-                            console.log('[OpenClaw] Auth token set');
+                        if (settings.auth_token && settings.auth_token.trim()) {
+                            this.authToken = settings.auth_token.trim();
+                            console.log('[OpenClaw] Auth token updated from TP settings');
                         } else {
-                            console.log('[OpenClaw] WARNING: auth_token is empty in settings!');
+                            console.log('[OpenClaw] auth_token not in TP settings, using default');
                         }
                         setTimeout(() => this.fetchStatus(), 500);
                     }
