@@ -54,8 +54,11 @@ class OpenClawRemotePlugin {
                 res.on('data', chunk => data += chunk);
                 res.on('end', () => {
                     try {
-                        resolve({ status: res.statusCode, body: JSON.parse(data) });
+                        const parsed = JSON.parse(data);
+                        console.log(`[OpenClaw] ← ${res.statusCode} (${tool}):`, JSON.stringify(parsed).slice(0, 120));
+                        resolve({ status: res.statusCode, body: parsed });
                     } catch {
+                        console.log(`[OpenClaw] ← ${res.statusCode} (${tool}): ${data.slice(0, 120)}`);
                         resolve({ status: res.statusCode, body: data });
                     }
                 });
@@ -65,6 +68,7 @@ class OpenClawRemotePlugin {
             req.setTimeout(10000, () => { req.destroy(); reject(new Error('Timeout')); });
             req.write(body);
             req.end();
+            console.log(`[OpenClaw] → POST /tools/invoke (${tool})`);
         });
     }
 
