@@ -180,7 +180,7 @@
     {
       "name": "gateway_url",
       "type": "text",
-      "default": "ws://192.168.1.191:18789/ws",
+      "default": "http://192.168.1.191:18789",
       "isPassword": false
     },
     {

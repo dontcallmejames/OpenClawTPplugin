@@ -1,21 +1,22 @@
 #!/usr/bin/env node
 /**
  * OpenClaw TouchPortal plugin (remote gateway version)
- * Connects to OpenClaw gateway WebSocket API from gaming PC
+ * Uses OpenClaw's HTTP /tools/invoke API — no complex WebSocket protocol needed.
  */
 
 const WebSocket = require('ws');
+const https = require('https');
+const http = require('http');
 
 class OpenClawRemotePlugin {
     constructor() {
         this.pluginId = 'openclaw.deckard';
-        this.tpWs = null;          // TouchPortal WebSocket
-        this.ocWs = null;          // OpenClaw gateway WebSocket
+        this.tpWs = null;
         this.running = true;
         this.statusInterval = null;
 
         // Settings (configured in TouchPortal plugin settings)
-        this.gatewayUrl = 'ws://192.168.1.191:18789/ws';
+        this.gatewayUrl = 'http://192.168.1.191:18789';   // Pi gateway HTTP base URL
         this.authToken = '';
 
         // Model mapping (action id -> model string)
@@ -26,28 +27,50 @@ class OpenClawRemotePlugin {
             openclaw_switch_model_gpt4o: 'openrouter/openai/gpt-4o',
             openclaw_switch_model_gemini: 'openrouter/google/gemini-2.5-flash-lite'
         };
-
-        // Request ID counter
-        this.reqId = 1;
     }
 
-    // Send JSON-RPC to OpenClaw gateway
-    sendGatewayRpc(method, params = {}) {
-        if (!this.ocWs || this.ocWs.readyState !== WebSocket.OPEN) {
-            console.error('[OpenClaw] Gateway not connected');
-            return null;
-        }
+    // Call OpenClaw's /tools/invoke HTTP endpoint
+    invokeTool(tool, args = {}, sessionKey = 'main') {
+        return new Promise((resolve, reject) => {
+            const body = JSON.stringify({ tool, args, sessionKey });
+            const url = new URL(`${this.gatewayUrl}/tools/invoke`);
+            const isHttps = url.protocol === 'https:';
+            const lib = isHttps ? https : http;
 
-        const id = this.reqId++;
-        const msg = {
-            jsonrpc: '2.0',
-            id,
-            method,
-            params: { ...params, token: this.authToken }
-        };
+            const options = {
+                hostname: url.hostname,
+                port: url.port || (isHttps ? 443 : 80),
+                path: '/tools/invoke',
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Content-Length': Buffer.byteLength(body),
+                    'Authorization': `Bearer ${this.authToken}`
+                }
+            };
 
-        this.ocWs.send(JSON.stringify(msg));
-        return id;
+            const req = lib.request(options, (res) => {
+                let data = '';
+                res.on('data', chunk => data += chunk);
+                res.on('end', () => {
+                    try {
+                        resolve({ status: res.statusCode, body: JSON.parse(data) });
+                    } catch {
+                        resolve({ status: res.statusCode, body: data });
+                    }
+                });
+            });
+
+            req.on('error', reject);
+            req.setTimeout(10000, () => { req.destroy(); reject(new Error('Timeout')); });
+            req.write(body);
+            req.end();
+        });
+    }
+
+    // Convenience: run a shell command on the Pi via exec tool
+    async runCommand(command) {
+        return this.invokeTool('exec', { command });
     }
 
     // Send message to TouchPortal
@@ -73,126 +96,105 @@ class OpenClawRemotePlugin {
         });
     }
 
-    async connectToGateway() {
-        console.log(`[OpenClaw] Connecting to gateway: ${this.gatewayUrl}`);
-
-        this.ocWs = new WebSocket(this.gatewayUrl);
-
-        this.ocWs.on('open', () => {
-            console.log('[OpenClaw] Gateway WebSocket connected');
-            this.sendToast('Connected to OpenClaw');
-            this.updateState('openclaw_agent_status', 'online');
-        });
-
-        this.ocWs.on('message', (data) => {
-            try {
-                const msg = JSON.parse(data.toString());
-                if (msg.result && msg.result.status) {
-                    const status = msg.result.status;
-                    if (status.model) {
-                        this.updateState('openclaw_current_model', status.model);
-                    }
-                }
-            } catch (err) {
-                console.error('[OpenClaw] Gateway message parse error:', err);
-            }
-        });
-
-        this.ocWs.on('error', (err) => {
-            console.error('[OpenClaw] Gateway error:', err.message);
-            this.updateState('openclaw_agent_status', 'error');
-        });
-
-        this.ocWs.on('close', () => {
-            console.log('[OpenClaw] Gateway disconnected');
-            this.updateState('openclaw_agent_status', 'offline');
-            // Reconnect after delay
-            if (this.running) {
-                setTimeout(() => this.connectToGateway(), 5000);
-            }
-        });
-    }
-
     async fetchStatus() {
-        this.sendGatewayRpc('status.get');
-        this.updateState('openclaw_uptime', 'remote');
+        try {
+            const res = await this.invokeTool('sessions_list', { limit: 1, messageLimit: 0 });
+            if (res.status === 200) {
+                this.updateState('openclaw_agent_status', 'online');
+            } else {
+                this.updateState('openclaw_agent_status', 'error');
+            }
+        } catch {
+            this.updateState('openclaw_agent_status', 'offline');
+        }
     }
 
     async handleAction(actionId) {
         console.log(`[OpenClaw] Action: ${actionId}`);
 
-        if (this.modelMap[actionId]) {
-            const model = this.modelMap[actionId];
-            this.sendGatewayRpc('message.send', {
-                channel: 'webchat',
-                message: `/model ${model}`
-            });
-            this.sendToast(`Switching to ${model}`);
-        }
+        try {
+            // Model switching
+            if (this.modelMap[actionId]) {
+                const model = this.modelMap[actionId];
+                const res = await this.runCommand(`openclaw message webchat '/model ${model}'`);
+                if (res.status === 200) {
+                    this.sendToast(`Switching to ${model}`);
+                    this.updateState('openclaw_current_model', model);
+                } else {
+                    this.sendToast(`Switch failed (${res.status})`);
+                    console.error('[OpenClaw] Model switch failed:', res.body);
+                }
+            }
 
-        else if (actionId === 'openclaw_reset_gateway') {
-            this.sendGatewayRpc('gateway.restart');
-            this.sendToast('Gateway restart initiated');
-        }
+            else if (actionId === 'openclaw_reset_gateway') {
+                // Fire-and-forget — gateway restart will cut the connection
+                this.runCommand('openclaw gateway restart').catch(() => {});
+                this.sendToast('Gateway restart initiated');
+                this.updateState('openclaw_agent_status', 'restarting');
+            }
 
-        else if (actionId === 'openclaw_trigger_heartbeat') {
-            this.sendGatewayRpc('file.write', {
-                path: '/home/dontcallmejames/.openclaw/workspace/HEARTBEAT.md',
-                content: '# Manual heartbeat\n'
-            });
-            this.sendToast('Heartbeat triggered');
-        }
+            else if (actionId === 'openclaw_trigger_heartbeat') {
+                const res = await this.runCommand(
+                    'echo "# Manual heartbeat" > /home/dontcallmejames/.openclaw/workspace/HEARTBEAT.md'
+                );
+                if (res.status === 200) {
+                    this.sendToast('Heartbeat triggered');
+                } else {
+                    this.sendToast(`Heartbeat failed (${res.status})`);
+                }
+            }
 
-        else if (actionId === 'openclaw_kill_subagents') {
-            this.sendGatewayRpc('subagents.kill', { target: 'all' });
-            this.sendToast('Sub-agents terminated');
-        }
+            else if (actionId === 'openclaw_kill_subagents') {
+                const res = await this.invokeTool('subagents', { action: 'kill', target: 'all' });
+                if (res.status === 200) {
+                    this.sendToast('Sub-agents terminated');
+                } else {
+                    this.sendToast(`Kill failed (${res.status})`);
+                }
+            }
 
-        else if (actionId === 'openclaw_toggle_thinking') {
-            this.sendGatewayRpc('message.send', {
-                channel: 'webchat',
-                message: '/reasoning'
-            });
-            this.sendToast('Thinking mode toggled');
+            else if (actionId === 'openclaw_toggle_thinking') {
+                const res = await this.runCommand("openclaw message webchat '/reasoning'");
+                if (res.status === 200) {
+                    this.sendToast('Thinking mode toggled');
+                } else {
+                    this.sendToast(`Toggle failed (${res.status})`);
+                }
+            }
+
+        } catch (err) {
+            console.error(`[OpenClaw] Action ${actionId} error:`, err.message);
+            this.sendToast(`Error: ${err.message.slice(0, 50)}`);
         }
 
         // Refresh status after action
-        setTimeout(() => this.fetchStatus(), 1000);
+        setTimeout(() => this.fetchStatus(), 2000);
     }
 
-    // Parse TP settings — values come as an array of {name: value} objects
+    // Parse TP settings — values come as array [{name: value}, ...] or plain object
     parseSettings(values) {
         if (!values) return {};
-        // TP sends values as an array: [{"setting_name": "value"}, ...]
         if (Array.isArray(values)) {
             return values.reduce((acc, item) => Object.assign(acc, item), {});
         }
-        // Or as a plain object (some versions)
         return values;
     }
 
     // TouchPortal connection
     connectToTouchPortal(port = 12136) {
         console.log(`[OpenClaw] Connecting to TouchPortal on port ${port}`);
-
         this.tpWs = new WebSocket(`ws://127.0.0.1:${port}`);
 
         this.tpWs.on('open', () => {
             console.log('[OpenClaw] TouchPortal connected');
+            // Pair with TouchPortal
+            this.sendToTP({ type: 'pair', id: this.pluginId });
 
-            // Send plugin info/pair message
-            this.sendToTP({
-                type: 'pair',
-                id: this.pluginId
-            });
+            // Initial status check
+            this.fetchStatus();
 
-            // Connect to OpenClaw gateway
-            this.connectToGateway();
-
-            // Start status polling every 30s
-            this.statusInterval = setInterval(() => {
-                this.fetchStatus();
-            }, 30000);
+            // Poll status every 30s
+            this.statusInterval = setInterval(() => this.fetchStatus(), 30000);
         });
 
         this.tpWs.on('message', (data) => {
@@ -205,15 +207,15 @@ class OpenClawRemotePlugin {
                 else if (msg.type === 'settings') {
                     const settings = this.parseSettings(msg.values);
                     if (settings.gateway_url) {
-                        this.gatewayUrl = settings.gateway_url;
-                        console.log(`[OpenClaw] Gateway URL updated: ${this.gatewayUrl}`);
-                        if (this.ocWs) this.ocWs.close();
-                        this.connectToGateway();
+                        this.gatewayUrl = settings.gateway_url.replace(/\/ws$/, '').replace(/\/$/, '');
+                        console.log(`[OpenClaw] Gateway URL: ${this.gatewayUrl}`);
                     }
                     if (settings.auth_token) {
                         this.authToken = settings.auth_token;
                         console.log('[OpenClaw] Auth token updated');
                     }
+                    // Trigger a status check after settings update
+                    setTimeout(() => this.fetchStatus(), 500);
                 }
                 else if (msg.type === 'closePlugin') {
                     this.running = false;
@@ -231,13 +233,11 @@ class OpenClawRemotePlugin {
             console.log('[OpenClaw] TouchPortal disconnected');
             this.running = false;
             if (this.statusInterval) clearInterval(this.statusInterval);
-            if (this.ocWs) this.ocWs.close();
         });
     }
 
     async run() {
-        console.log('[OpenClaw] Starting remote plugin...');
-
+        console.log('[OpenClaw] Starting remote plugin (HTTP mode)...');
         const tpPort = process.env.TP_PLUGIN_PORT || 12136;
         this.connectToTouchPortal(tpPort);
 
