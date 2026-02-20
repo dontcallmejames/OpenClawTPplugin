@@ -102,7 +102,7 @@ class OpenClawRemotePlugin {
 
     async fetchStatus() {
         try {
-            const res = await this.invokeTool('sessions_list', { limit: 1, messageLimit: 0 });
+            const res = await this.invokeTool('exec', { command: 'openclaw gateway status --short 2>/dev/null || echo "running"' });
             if (res.status === 200) {
                 this.updateState('openclaw_agent_status', 'online');
             } else {
