@@ -1,6 +1,6 @@
 {
   "api": 10,
-  "version": 1,
+  "version": 2,
   "name": "OpenClaw",
   "id": "openclaw.deckard",
   "configuration": {
@@ -8,163 +8,186 @@
     "colorLight": "#16213e",
     "parentCategory": "misc"
   },
-  "plugin_start_cmd": "node plugin-remote.js",
+  "plugin_start_cmd_windows": "node \"%TP_PLUGIN_FOLDER%OpenClawTPplugin\\plugin-remote.js\"",
+  "plugin_start_cmd": "node \"%TP_PLUGIN_FOLDER%OpenClawTPplugin/plugin-remote.js\"",
   "categories": [
     {
       "id": "openclaw_actions",
-      "name": "Actions",
-      "imagepath": "icon-actions.png"
+      "name": "OpenClaw",
+      "imagepath": "%TP_PLUGIN_FOLDER%OpenClawTPplugin/icon-actions.png",
+      "actions": [
+        {
+          "id": "openclaw_reset_gateway",
+          "name": "Reset Gateway",
+          "type": "communicate",
+          "lines": {
+            "action": [
+              {
+                "language": "default",
+                "data": [{ "lineFormat": "Reset OpenClaw Gateway" }]
+              }
+            ]
+          },
+          "data": []
+        },
+        {
+          "id": "openclaw_switch_model_deepseek",
+          "name": "Model: DeepSeek V3.2",
+          "type": "communicate",
+          "lines": {
+            "action": [
+              {
+                "language": "default",
+                "data": [{ "lineFormat": "Switch model to DeepSeek V3.2" }]
+              }
+            ]
+          },
+          "data": []
+        },
+        {
+          "id": "openclaw_switch_model_claude",
+          "name": "Model: Claude Sonnet 4.6",
+          "type": "communicate",
+          "lines": {
+            "action": [
+              {
+                "language": "default",
+                "data": [{ "lineFormat": "Switch model to Claude Sonnet 4.6" }]
+              }
+            ]
+          },
+          "data": []
+        },
+        {
+          "id": "openclaw_switch_model_gpt4o",
+          "name": "Model: GPT-4o",
+          "type": "communicate",
+          "lines": {
+            "action": [
+              {
+                "language": "default",
+                "data": [{ "lineFormat": "Switch model to GPT-4o" }]
+              }
+            ]
+          },
+          "data": []
+        },
+        {
+          "id": "openclaw_switch_model_gemini",
+          "name": "Model: Gemini 2.5 Flash",
+          "type": "communicate",
+          "lines": {
+            "action": [
+              {
+                "language": "default",
+                "data": [{ "lineFormat": "Switch model to Gemini 2.5 Flash Lite" }]
+              }
+            ]
+          },
+          "data": []
+        },
+        {
+          "id": "openclaw_switch_model_ollama",
+          "name": "Model: Llama3.2 3B (Local)",
+          "type": "communicate",
+          "lines": {
+            "action": [
+              {
+                "language": "default",
+                "data": [{ "lineFormat": "Switch model to local Llama3.2 3B (Ollama)" }]
+              }
+            ]
+          },
+          "data": []
+        },
+        {
+          "id": "openclaw_kill_subagents",
+          "name": "Kill Sub-Agents",
+          "type": "communicate",
+          "lines": {
+            "action": [
+              {
+                "language": "default",
+                "data": [{ "lineFormat": "Terminate all running sub-agents" }]
+              }
+            ]
+          },
+          "data": []
+        },
+        {
+          "id": "openclaw_toggle_thinking",
+          "name": "Toggle Thinking Mode",
+          "type": "communicate",
+          "lines": {
+            "action": [
+              {
+                "language": "default",
+                "data": [{ "lineFormat": "Enable/disable reasoning mode" }]
+              }
+            ]
+          },
+          "data": []
+        },
+        {
+          "id": "openclaw_trigger_heartbeat",
+          "name": "Trigger Heartbeat",
+          "type": "communicate",
+          "lines": {
+            "action": [
+              {
+                "language": "default",
+                "data": [{ "lineFormat": "Trigger a manual heartbeat check" }]
+              }
+            ]
+          },
+          "data": []
+        }
+      ],
+      "events": [],
+      "states": [],
+      "connectors": []
     },
     {
       "id": "openclaw_status",
-      "name": "Status",
-      "imagepath": "icon-status.png"
-    }
-  ],
-  "actions": [
-    {
-      "id": "openclaw_reset_gateway",
-      "name": "Reset Gateway",
-      "prefix": "OpenClaw",
-      "type": "communicate",
-      "executionType": "once",
-      "execution_cmd": "openclaw gateway restart",
-      "tryInline": false,
-      "description": "Restart the OpenClaw gateway",
-      "category": "openclaw_actions",
-      "data": []
-    },
-    {
-      "id": "openclaw_switch_model_deepseek",
-      "name": "Model: DeepSeek V3.2",
-      "prefix": "OpenClaw",
-      "type": "communicate",
-      "executionType": "once",
-      "execution_cmd": "",
-      "tryInline": false,
-      "description": "Switch to DeepSeek V3.2 (OpenRouter)",
-      "category": "openclaw_actions",
-      "data": []
-    },
-    {
-      "id": "openclaw_switch_model_ollama",
-      "name": "Model: Llama3.2 3B",
-      "prefix": "OpenClaw",
-      "type": "communicate",
-      "executionType": "once",
-      "execution_cmd": "",
-      "tryInline": false,
-      "description": "Switch to local Llama3.2 3B (Ollama)",
-      "category": "openclaw_actions",
-      "data": []
-    },
-    {
-      "id": "openclaw_switch_model_claude",
-      "name": "Model: Claude 3.5 Sonnet",
-      "prefix": "OpenClaw",
-      "type": "communicate",
-      "executionType": "once",
-      "execution_cmd": "",
-      "tryInline": false,
-      "description": "Switch to Claude 3.5 Sonnet",
-      "category": "openclaw_actions",
-      "data": []
-    },
-    {
-      "id": "openclaw_switch_model_gpt4o",
-      "name": "Model: GPT‑4o",
-      "prefix": "OpenClaw",
-      "type": "communicate",
-      "executionType": "once",
-      "execution_cmd": "",
-      "tryInline": false,
-      "description": "Switch to GPT‑4o",
-      "category": "openclaw_actions",
-      "data": []
-    },
-    {
-      "id": "openclaw_switch_model_gemini",
-      "name": "Model: Gemini 2.5 Flash",
-      "prefix": "OpenClaw",
-      "type": "communicate",
-      "executionType": "once",
-      "execution_cmd": "",
-      "tryInline": false,
-      "description": "Switch to Gemini 2.5 Flash Lite",
-      "category": "openclaw_actions",
-      "data": []
-    },
-    {
-      "id": "openclaw_kill_subagents",
-      "name": "Kill Sub‑Agents",
-      "prefix": "OpenClaw",
-      "type": "communicate",
-      "executionType": "once",
-      "execution_cmd": "",
-      "tryInline": false,
-      "description": "Terminate all running sub‑agents",
-      "category": "openclaw_actions",
-      "data": []
-    },
-    {
-      "id": "openclaw_toggle_thinking",
-      "name": "Toggle Thinking Mode",
-      "prefix": "OpenClaw",
-      "type": "communicate",
-      "executionType": "once",
-      "execution_cmd": "",
-      "tryInline": false,
-      "description": "Enable/disable reasoning mode (/reasoning)",
-      "category": "openclaw_actions",
-      "data": []
-    },
-    {
-      "id": "openclaw_trigger_heartbeat",
-      "name": "Trigger Heartbeat",
-      "prefix": "OpenClaw",
-      "type": "communicate",
-      "executionType": "once",
-      "execution_cmd": "",
-      "tryInline": false,
-      "description": "Trigger a manual heartbeat check",
-      "category": "openclaw_actions",
-      "data": []
-    }
-  ],
-  "states": [
-    {
-      "id": "openclaw_current_model",
-      "desc": "Current model",
-      "defaultValue": "unknown",
-      "category": "openclaw_status"
-    },
-    {
-      "id": "openclaw_agent_status",
-      "desc": "Agent status",
-      "defaultValue": "offline",
-      "category": "openclaw_status"
-    },
-    {
-      "id": "openclaw_uptime",
-      "desc": "Uptime",
-      "defaultValue": "0s",
-      "category": "openclaw_status"
+      "name": "OpenClaw Status",
+      "imagepath": "%TP_PLUGIN_FOLDER%OpenClawTPplugin/icon-status.png",
+      "actions": [],
+      "events": [],
+      "states": [
+        {
+          "id": "openclaw_current_model",
+          "type": "text",
+          "desc": "Current Model",
+          "default": "unknown"
+        },
+        {
+          "id": "openclaw_agent_status",
+          "type": "text",
+          "desc": "Agent Status",
+          "default": "offline"
+        },
+        {
+          "id": "openclaw_uptime",
+          "type": "text",
+          "desc": "Uptime",
+          "default": "0s"
+        }
+      ],
+      "connectors": []
     }
   ],
   "settings": [
     {
-      "id": "gateway_url",
-      "name": "Gateway URL",
+      "name": "gateway_url",
       "type": "text",
-      "defaultValue": "ws://192.168.1.191:18789/ws",
-      "desc": "WebSocket URL of OpenClaw gateway (e.g., ws://[PI-IP]:18789/ws)"
+      "default": "ws://192.168.1.191:18789/ws",
+      "isPassword": false
     },
     {
-      "id": "auth_token",
-      "name": "Auth Token",
+      "name": "auth_token",
       "type": "text",
-      "defaultValue": "5ded5065b332507fde2eef8ffd4ba0453bf1fc230c124dfe",
-      "desc": "Gateway authentication token"
+      "default": "",
+      "isPassword": true
     }
   ]
 }
