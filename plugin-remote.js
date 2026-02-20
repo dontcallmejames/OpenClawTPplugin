@@ -196,8 +196,8 @@ class OpenClawRemotePlugin {
             // Pair with TouchPortal
             this.sendToTP({ type: 'pair', id: this.pluginId });
 
-            // Initial status check
-            this.fetchStatus();
+            // Delay initial status check to allow TP to send settings first
+            setTimeout(() => this.fetchStatus(), 2000);
 
             // Poll status every 30s
             this.statusInterval = setInterval(() => this.fetchStatus(), 30000);
@@ -217,13 +217,16 @@ class OpenClawRemotePlugin {
                     }
                     else if (msg.type === 'settings') {
                         const settings = this.parseSettings(msg.values);
+                        console.log('[OpenClaw] Settings received:', JSON.stringify(settings).slice(0, 120));
                         if (settings.gateway_url) {
                             this.gatewayUrl = settings.gateway_url.replace(/\/ws$/, '').replace(/\/$/, '');
                             console.log(`[OpenClaw] Gateway URL: ${this.gatewayUrl}`);
                         }
                         if (settings.auth_token) {
                             this.authToken = settings.auth_token;
-                            console.log('[OpenClaw] Auth token updated');
+                            console.log('[OpenClaw] Auth token set');
+                        } else {
+                            console.log('[OpenClaw] WARNING: auth_token is empty in settings!');
                         }
                         setTimeout(() => this.fetchStatus(), 500);
                     }
